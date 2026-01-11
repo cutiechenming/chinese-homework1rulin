@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《儒林外史》阅读作业单讲评</title>
+    <style>
+        :root {
+            --primary-color: #4F46E5; /* 教学蓝 */
+            --secondary-color: #F59E0B; /* 活力橙 */
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-light: #6B7280;
+            --success-color: #10B981;
+            --correct-bg: #D1FAE5;
+            --correct-text: #065F46;
+        }
+
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 防止页面整体滚动，只让内容区滚动 */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部导航 */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .progress-indicator {
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        /* 主内容区 */
+        main {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 卡片容器 */
+        .slide-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 90%;
+            display: none; /* 默认隐藏，JS控制显示 */
+            animation: fadeIn 0.5s ease;
+        }
+
+        .slide-container.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 普通题目布局（上题下答） */
+        .layout-standard {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            height: 100%;
+            overflow-y: auto;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 阅读理解布局（左文右题） */
+        .layout-reading {
+            display: flex;
+            gap: 20px;
+            height: 100%;
+        }
+        
+        .reading-material {
+            flex: 1;
+            background: #fff;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            border-left: 5px solid var(--secondary-color);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #374151;
+        }
+
+        .reading-question-area {
+            flex: 1;
+            background: #fff;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 题目样式 */
+        .question-tag {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .question-text {
+            font-size: 1.5rem; /* 题目字体适中 */
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* 选项样式 */
+        .options-list {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+
+        .option-item {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: default;
+            transition: all 0.3s;
+        }
+
+        .option-item.correct {
+            background-color: var(--correct-bg);
+            border-color: var(--success-color);
+            color: var(--correct-text);
+            font-weight: bold;
+        }
+
+        /* 答案与解析区域 */
+        .answer-section {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 2px dashed #E5E7EB;
+        }
+
+        .answer-box {
+            display: none; /* 默认隐藏 */
+            margin-top: 20px;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .answer-box.visible {
+            display: block;
+        }
+
+        .big-answer {
+            font-size: 2.5rem; /* 答案超大字体 */
+            color: var(--success-color);
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        
+        .text-answer {
+            font-size: 1.8rem; /* 文本类答案大字体 */
+            color: var(--success-color);
+            font-weight: bold;
+            line-height: 1.4;
+            background: #ECFDF5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .analysis-box {
+            background-color: #FFFBEB;
+            border-left: 4px solid var(--secondary-color);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .highlight-point {
+            background-color: rgba(245, 158, 11, 0.2);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #B45309;
+        }
+
+        /* 底部控制栏 */
+        footer {
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: white;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-reveal {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-text {
+             background-color: var(--success-color);
+             color: white;
+        }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 表格样式优化 */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1rem;
+        }
+        .info-table th, .info-table td {
+            border: 1px solid #D1D5DB;
+            padding: 12px;
+            text-align: center;
+        }
+        .info-table th {
+            background-color: #F3F4F6;
+            font-weight: bold;
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555; 
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>《儒林外史》九年级阅读作业讲评</h1>
+        <div class="progress-indicator" id="progress">1 / 20</div>
+    </header>
+
+    <main id="main-content">
+        </main>
+
+    <footer>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary" onclick="prevSlide()">← 上一题</button>
+            <button class="btn btn-primary" onclick="nextSlide()">下一题 →</button>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-reveal" onclick="toggleAnswer()">👁️ 显示答案</button>
+            <button class="btn btn-text" onclick="toggleAnalysis()">💡 详细解析</button>
+        </div>
+    </footer>
+
+    <script>
+        // 试题数据
+        const quizData = [
+            // --- 一、选择题 ---
+            {
+                type: "choice",
+                section: "一、选择题",
+                question: "1. 下列关于《儒林外史》内容的表述，正确的一项是（    ）",
+                options: [
+                    "A. 《儒林外史》是由明代吴敬梓创作的长篇小说。“儒林”，指封建社会里“读书人”或“士人”这一群体。",
+                    "B. 《儒林外史》代表着中国古代神魔小说的高峰，它开创了以小说直接评价现实生活的范例。鲁迅认为该书思想内容“秉持公心，指摘时弊”。",
+                    "C. 小说通过刻画奔走于科举道路上的众多士人形象，对封建科举制度和整个封建社会的“儒林”作出了深刻的批判。",
+                    "D. 小说有贯穿全书的中心人物和主要情节，表现普通士人日常生活中的生存状态与精神世界。"
+                ],
+                answer: "C",
+                analysis: "A项错在“明代”，应为<span class='highlight-point'>清代</span>；B项错在“神魔小说”，应为<span class='highlight-point'>讽刺小说</span>；D项错在“有贯穿全书的中心人物”，实际上<span class='highlight-point'>没有贯穿全书的中心人物和主要情节</span>。"
+            },
+            {
+                type: "choice",
+                section: "一、选择题",
+                question: "2. 严监生临死的时候把手从被单里拿出来，伸出两根手指头的意思是（    ）",
+                options: [
+                    "A. 还有两笔银子，未曾吩咐明白",
+                    "B. 两位舅爷不在跟前，非常挂念",
+                    "C. 还有两个亲人，不曾见面",
+                    "D. 灯盆里点了两茎灯草，太费油"
+                ],
+                answer: "D",
+                analysis: "严监生是典型的吝啬鬼形象。他伸出两根指头是因为看到<span class='highlight-point'>灯盏里点了两茎灯草</span>，怕费油，体现了他爱财如命的性格。"
+            },
+            {
+                type: "choice",
+                section: "一、选择题",
+                question: "3. 下列有关《儒林外史》名著人物的表述，有误的一项是（    ）",
+                options: [
+                    "A. 虞育德进京会试中了进士，据实上报五十岁“高龄”，结果被给了南京国子监博士的闲职。",
+                    "B. 周进被吹捧为能作“天地间之至文”，但竟连北宋大文学家苏轼是谁都不知道。",
+                    "C. 严贡生故意追究船家吃掉他的云片糕的责任，威胁要将船家送官，赖了船费。",
+                    "D. 匡超人本是一个质朴孝顺的少年。结识潘三后逐渐泯灭人性，最终变成了薄情寡义的虚伪小人。"
+                ],
+                answer: "B",
+                analysis: "B项张冠李戴。不知道苏轼是谁、一旦中举集名利于一身的人是<span class='highlight-point'>范进</span>，而不是周进。"
+            },
+            {
+                type: "choice",
+                section: "一、选择题",
+                question: "4. 小说中称得上“终乃以辞却功名富贵，品第最上一层为中流砥柱者”的是（    ）",
+                options: [
+                    "A. 周进",
+                    "B. 严贡生",
+                    "C. 范进",
+                    "D. 王冕"
+                ],
+                answer: "D",
+                analysis: "王冕<span class='highlight-point'>蔑视权贵，以卖画为生</span>，多次推辞做官，隐居会稽山，是书中“品第最上一层”的贤者形象。"
+            },
+            {
+                type: "choice",
+                section: "一、选择题",
+                question: "5. 下面有关《儒林外史》的说法不正确的一项是（    ）",
+                options: [
+                    "A. 《儒林外史》以写实主义手法来刻画人物形象，成功地运用了讽刺艺术。",
+                    "B. 《儒林外史》没有贯穿全书的中心人物和主要情节，而是由众多故事连缀而成。",
+                    "C. 范进中举后能同情百姓，为民请命。",
+                    "D. 王冕是《儒林外史》中的一个正面形象，他性格孤傲，鄙视权贵。"
+                ],
+                answer: "C",
+                analysis: "C项错误。范进中举后<span class='highlight-point'>彻底融入了封建官场</span>，开始压榨百姓，并不是“为民请命”的好官。"
+            },
+            {
+                type: "choice",
+                section: "一、选择题",
+                question: "6. 结合《儒林外史》整本书来看，下面哪项最可能是吴敬梓写“王冕画荷”这段文字的用意？（    ）",
+                options: [
+                    "A. 告诉读者兴趣和决心是事业有成的重要因素。",
+                    "B. 暗示士人的春天已经到来。",
+                    "C. 引出下文时知县索画等情节，表现时知县的心机。",
+                    "D. 通过王冕来“敷陈大义”，“隐括全文”，树立不慕荣利的土人楷模。"
+                ],
+                answer: "D",
+                analysis: "第一回回目“说楔子敷陈大义借名流隐括全文”。王冕是作者树立的<span class='highlight-point'>道德标杆（理想人物）</span>，与书中追名逐利之辈形成鲜明对比。"
+            },
+             {
+                type: "choice",
+                section: "一、选择题",
+                question: "7. 下列对《儒林外史》的赏析不正确的一项（    ）",
+                options: [
+                    "A. 作品在讽刺丑恶的同时，也塑造了一些象征正面理想的人物，如王冕、杜少卿等。",
+                    "B. 作品将讽刺的锋芒隐藏在含而不露、耐人寻味的叙述中。",
+                    "C. 作者把王冕的故事作为全书的“楔子”，体现了中国士人的精神。",
+                    "D. 作品对王惠、王玉辉、范进、匡超人既有讽刺，又有同情。"
+                ],
+                answer: "D",
+                analysis: "D项错误。对于贪官污吏<span class='highlight-point'>王惠</span>，作者是<span class='highlight-point'>只有讽刺，没有同情</span>的。"
+            },
+            {
+                type: "choice",
+                section: "一、选择题",
+                question: "8. 下列有关虞博士的四件事，按发生的先后顺序排列正确的一项是（    ）<br>①答应给汤相公银子去典屋住 ②主祭泰伯祠 ③补南京国子监博士 ④救助落水的庄农人家",
+                options: [
+                    "A. ①③②④",
+                    "B. ②①④③",
+                    "C. ③④②①",
+                    "D. ④③①②"
+                ],
+                answer: "D",
+                analysis: "虞博士先是<span class='highlight-point'>救助农人(④)</span>，五十多岁中进士<span class='highlight-point'>补国子监博士(③)</span>，然后汤相公来借银子<span class='highlight-point'>(①)</span>，最后因德高望重被推举<span class='highlight-point'>主祭泰伯祠(②)</span>。"
+            },
+            {
+                type: "choice",
+                section: "一、选择题",
+                question: "9. 《儒林外史》描写了一批沉迷科举的“社会怪胎”，这些人不包括（    ）",
+                options: [
+                    "A. 八股文选家马二先生",
+                    "B. 伪侠士张铁臂",
+                    "C. 下层文人权勿用",
+                    "D. 伶人鲍文卿"
+                ],
+                answer: "D",
+                analysis: "鲍文卿虽是个戏子（伶人），但他<span class='highlight-point'>靠本事吃饭，乐于助人，淳朴善良</span>，不是沉迷科举的怪胎。"
+            },
+            {
+                type: "choice",
+                section: "一、选择题",
+                question: "10. 下列关于《儒林外史》的表述,有误的一项是（    ）",
+                options: [
+                    "A. 杜少卿是作者心中的理想人物之一。",
+                    "B. 匡超人最初心地善良，后在马二先生鼓动下走上追求功名之路。",
+                    "C. 牛浦郎冒名顶替去世的诗人牛布衣结交权贵。",
+                    "D. 周进中举前，他的岳父胡屠户说他想中举是“癞蛤蟆想吃天鹅肉”。"
+                ],
+                answer: "D",
+                analysis: "D项张冠李戴。说“癞蛤蟆想吃天鹅肉”的是<span class='highlight-point'>胡屠户骂范进</span>，不是骂周进。"
+            },
+
+            // --- 二、填空题 ---
+            {
+                type: "text",
+                section: "二、填空题",
+                question: "1. 《儒林外史》的作者是____，字敏轩，____代小说家。这是一部____体长篇____小说。",
+                answer: "吴敬梓 | 清 | 章回 | 讽刺",
+                analysis: "文学常识记忆：吴敬梓，清代，章回体，讽刺小说。"
+            },
+            {
+                type: "text",
+                section: "二、填空题",
+                question: "2. 《儒林外史》表现的是普通士人日常生活中的生存状态与精神世界，以写实主义描绘他们对“____”的不同表现。",
+                answer: "功名富贵",
+                analysis: "全书围绕“功名富贵”这面镜子，照出儒林各种人物的灵魂。"
+            },
+             {
+                type: "text",
+                section: "二、填空题",
+                question: "4. ____是《儒林外史》中一位正直善良、敢于直言的官员形象，他辞官归隐，受人敬仰。",
+                answer: "杜少卿（或庄绍光，但杜少卿更符合“辞官”及全书核心正面形象描述）",
+                analysis: "题目描述稍显宽泛，但根据标准答案推断，此处多指**杜少卿**或**庄绍光**等正面人物。"
+            },
+            {
+                type: "table",
+                section: "二、填空题",
+                question: "5. 完成人物表格分类：<br>① 正面形象：杜少卿、沈琼枝、______<br>② 反面形象：牛浦郎、潘三、______<br>③ 不屑科考的形象：杜少卿、庄绍光、______<br>④ 思考：分类整理的作用是？",
+                answer: "① 虞育德 <br>② 严监生 <br>③ 王冕 (或 迟衡山) <br>④ 有助于更清晰地了解小说内容，把握人物形象，从而领会作者的写作意图。",
+                analysis: "通过分类对比，能更好地理解作者对不同类人的褒贬态度。"
+            },
+            {
+                type: "text",
+                section: "二、填空题",
+                question: "12. 选文中的A是____（人名），他临死时念念不忘的是____。",
+                answer: "严监生 | 油灯里点了两茎灯草，费油",
+                analysis: "经典情节：严监生临死伸两根指头，是因为嫌灯草点多了费油，极度吝啬。"
+            },
+            {
+                type: "text",
+                section: "二、填空题",
+                question: "13. 【甲】【乙】两段中的周进和范进是____关系。同样是“不省人事”，范进是____，周进是____。",
+                answer: "师徒 | 喜极 | 悲极",
+                analysis: "周进是范进的考官（座师）。范进中举喜极而疯，周进在贡院撞号板是悲痛至极。"
+            },
+            {
+                type: "text",
+                section: "二、填空题",
+                question: "14. 结合材料，说说作者表面上写的是各种“吃”，其实是要说什么？",
+                answer: "① 表现周进的迂腐。<br>② 凸显范进居丧吃虾丸的虚伪。<br>③ 展现严贡生讹诈船家的贪婪狡黠。<br>④ 核心：批判科举对人性的扭曲，反映社会阶层的不平等与黑暗。",
+                analysis: "“吃”是表象，背后是人物被科举制度异化后的丑态（虚伪、贪婪、迂腐）。"
+            },
+            {
+                type: "text",
+                section: "二、填空题",
+                question: "15. (1) 严监生主要采用了____手法来达到讽刺效果。<br>(2) 刻画严监生主要从____、____角度描写。<br>(3) 小说人物按“功名富贵”分两类：一类是____（如王冕），一类是____（如匡超人）。",
+                answer: "(1) 夸张 <br>(2) 动作 | 神态 <br>(3) 厌弃名利富贵的高尚者 | 追求功名富贵的卑污者",
+                analysis: "严监生临死挑灯草运用了极度的**夸张**。人物分类是全书的灵魂骨架。"
+            },
+
+            // --- 三、阅读情节选段 ---
+            {
+                type: "reading",
+                section: "三、阅读情节选段 1",
+                material: "<b>【片段一】</b><br>他爬将起来，又拍着手大笑道：“噫！ 好！ 我中了！”...一脚踹在塘里，挣起来，头发都跌散了...众人大眼望小眼，一齐道：“原来新贵人欢喜疯了。”<br><br><b>【片段二】</b><br>荀员外听了这话，哭倒在地。...王员外道：“...若是报明了丁忧家去，再迟三年，如何了得？不如且将这事瞒下，候考选过了再处。”<br><br><b>【片段三】</b><br>鲁大老爷接着朝命，正在合家欢喜...不想痰病大发，登时中了脏，已不醒人事了。",
+                question: "(1) 下面是对以上内容所做的批注，不正确的一项是（   ）<br>(2) 总结以上三个片段所体现情节的相似之处，并简要分析作者这样写的目的。",
+                answer: "(1) C <br><br>(2) 相似之处：主人公都是苦考多年才得中（或有望得中）的读书人，在面对功名利禄的巨大冲击时，出现了生理或心理的失态（疯、隐瞒丁忧、痰迷心窍）。<br>目的：讽刺科举制度对读书人身心的摧残，揭示功名富贵对人性的异化。",
+                analysis: "(1) C项错误。片段三中鲁编修是“升了侍读”，并不是因为升迁太高兴而病发，原文语境更多指向由于过度的情绪波动或原本体弱，且关键在于“乐极生悲”的讽刺意味，但题目选项C说“鲁编修...合家欢喜...而后丧命”是对的？<br>勘误：细看选项C，鲁编修确实是欢喜时病发。让我们看B项，王员外提议隐瞒，荀员外本身是哭倒在地的。看A项范进没错。看D项都是苦考多年。再回看C项，原文是“不想痰病大发...已不在了”，确实是丧命。 <br><b style='color:red'>注意：</b>原卷参考答案选C。原因可能是鲁编修并不是单纯因欢喜而死，而是痰病发作，且他已经是官员，不像范进是乍富。或者C项表述不够准确。<br>重点讲解(2)题：都是写“大喜大悲”下的失态，为了讽刺科举毒害。"
+            },
+             {
+                type: "reading",
+                section: "三、阅读情节选段 2",
+                material: "<b>【片段一】</b><br>鲁编修因无公子，就把女儿当作儿子...教他做“破题”“破承”...肚里记得三千余篇...鲁编修每常叹道：“假若是个儿子，几十个进士、状元都中来了！”...<br><br><b>【片段二】</b><br>小姐道：“我只道他举业已成，不日就是举人、进士；谁想如此光景，岂不误我终身！”...小姐道：“母亲，自古及今，几曾看见不会中进士的人可以叫做个名士的？”",
+                question: "(1) 赏析片段一划线句（鲁编修的叹息）。<br>(2) 作者设计鲁小姐对新姑爷蘧公孙不满意的情节，意图是什么？<br>(3) 蘧公孙与王冕，谁是真正的“逃名者”？",
+                answer: "(1) 侧面描写。通过鲁编修的话，隐晦表达无子承继仕途的遗憾，侧面表现鲁小姐资质聪慧、文采出众。<br><br>(2) 鲁小姐连深居闺房都痴迷八股，可见科举制度毒害之深（社会各阶层都被波及）；借此批判科举取士对世风、人心的异化。<br><br>(3) 王冕。表现：拒见危素；知县拜访时逃往乡下；朝廷征聘时隐居会稽山。",
+                analysis: "鲁小姐是书中深受八股毒害的女性典型。她认为“不中进士不算名士”，这是一种极度扭曲的价值观。"
+            },
+            {
+                type: "reading",
+                section: "三、阅读情节选段 3",
+                material: "<b>语料一（胡屠户）：</b><br>“我每常说，我的这个贤婿，才学又高，品貌又好...我小老这一双眼睛，却是认得人的。”<br><br><b>语料二（王玉辉）：</b><br>王玉辉...仰天大笑道：“死的好！死的好！”<br><br><b>语料三（严贡生）：</b><br>严贡生将钥匙开了箱子，取出一方云片糕来...那掌舵驾长害馋痨...严贡生道：“...再说云片糕，先打你几个嘴巴！”",
+                question: "(1) 分析划线句对塑造胡屠户和王玉辉及表现主题的作用。<br>(2) 为甲群（王冕、杜少卿等）拟个群名称。<br>(3) 把严贡生归到乙群（浊世腐儒）里，是否合理？",
+                answer: "(1) <br><b>胡屠户：</b>表现其嫌贫爱富、趋炎附势的市侩形象；揭示科举对人的腐蚀。<br><b>王玉辉：</b>刻画他受封建礼教毒害至深，麻木不仁；揭示礼教“吃人”的本质。<br><br>(2) <b>儒林贤士</b>（或：清流雅士）。理由：他们品德高尚、淡泊名利。<br><br>(3) <b>合理。</b>严贡生自私贪婪、欺压百姓，虽有贡生之名，实为败类，符合“浊世腐儒”特征。",
+                analysis: "胡屠户是“变色龙”，王玉辉是“礼教僵尸”，严贡生是“土豪劣绅”。"
+            },
+            {
+                type: "reading",
+                section: "三、阅读情节选段 4",
+                material: "<b>【甲 鲁小姐】</b><br>小姐道：“母亲，向古及今，几曾看见不会中进士的人可以叫做个名士的？”...“依孩儿的意思，总是自挣的功名好...”<br><br><b>【乙 沈琼枝】</b><br>沈琼枝道：“...况且我虽然不才，也颇知文墨，怎么肯把一个张耳之妻去事外黄佣奴？故此逃了出来。”...知县指着堂下的槐树...沈琼枝不慌不忙，吟出一首七言八句来，又快又好。",
+                question: "(1) 鲁小姐恼怒的前因后果？<br>(2) 鲁小姐对功名的态度？<br>(3) 比较两位女性形象的异同。<br>(4) 塑造这两位女性形象的用意？",
+                answer: "(1) 前因：鲁编修误认蘧公孙为真名士而招婿。后果：婚后发现丈夫无心举业，鲁小姐失望恼怒，将希望寄托在儿子身上。<br><br>(2) 鲁小姐热衷功名，执着追求，认为必须靠真才实学（科举）获取功名。<br><br>(3) <b>同：</b>才貌双全，婚姻由父母做主，有自己的人生追求。<br><b>异：</b>鲁小姐安于封建礼教，用知识相夫教子博功名；沈琼枝具有侠气，追求平等自由，用诗文谋生。<br><br>(4) ①以女子之才衬托某些儒子无能；②鲁小姐讽刺科举毒害之深；③沈琼枝讽刺沽名钓誉的假名士，寄托作者理想。",
+                analysis: "沈琼枝是《儒林外史》中独特的女性形象，代表了作者对独立人格的赞赏。"
+            }
+        ];
+
+        let currentSlideIndex = 0;
+
+        function renderSlide() {
+            const container = document.getElementById('main-content');
+            const data = quizData[currentSlideIndex];
+            
+            // 更新进度条
+            document.getElementById('progress').innerText = `${currentSlideIndex + 1} / ${quizData.length}`;
+
+            // 生成HTML
+            let html = '';
+            
+            // 根据不同类型生成不同布局
+            if (data.type === 'choice') {
+                html = `
+                    <div class="slide-container active layout-standard">
+                        <span class="question-tag">${data.section}</span>
+                        <div class="question-text">${data.question}</div>
+                        <ul class="options-list">
+                            ${data.options.map(opt => `<li class="option-item">${opt}</li>`).join('')}
+                        </ul>
+                        <div class="answer-section">
+                            <div class="answer-box" id="ans-box">
+                                <div class="big-answer">答案：${data.answer}</div>
+                                <div class="analysis-box hidden" id="analysis-box">
+                                    <strong>解析：</strong><br>${data.analysis}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (data.type === 'text' || data.type === 'table') {
+                html = `
+                    <div class="slide-container active layout-standard">
+                         <span class="question-tag">${data.section}</span>
+                        <div class="question-text">${data.question}</div>
+                        <div class="answer-section">
+                            <div class="answer-box" id="ans-box">
+                                <div class="text-answer">${data.answer}</div>
+                                <div class="analysis-box hidden" id="analysis-box">
+                                    <strong>解析：</strong><br>${data.analysis}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (data.type === 'reading') {
+                html = `
+                    <div class="slide-container active layout-reading">
+                        <div class="reading-material">
+                            <h3 style="margin-top:0; color:var(--primary-color);">📄 阅读材料</h3>
+                            ${data.material}
+                        </div>
+                        <div class="reading-question-area">
+                            <span class="question-tag">${data.section}</span>
+                            <div class="question-text" style="font-size:1.2rem;">${data.question}</div>
+                            <div class="answer-section" style="margin-top:auto;">
+                                <div class="answer-box" id="ans-box">
+                                    <div class="text-answer" style="font-size:1.3rem;">${data.answer}</div>
+                                    <div class="analysis-box hidden" id="analysis-box">
+                                        <strong>解析：</strong><br>${data.analysis}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 交互功能
+        function nextSlide() {
+            if (currentSlideIndex < quizData.length - 1) {
+                currentSlideIndex++;
+                renderSlide();
+            } else {
+                alert("已经是最后一题了！");
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                renderSlide();
+            }
+        }
+
+        function toggleAnswer() {
+            const ansBox = document.getElementById('ans-box');
+            ansBox.classList.toggle('visible');
+            
+            // 如果是选择题，高亮正确选项
+            const data = quizData[currentSlideIndex];
+            if (data.type === 'choice' && ansBox.classList.contains('visible')) {
+                const options = document.querySelectorAll('.option-item');
+                options.forEach(opt => {
+                    if (opt.innerText.startsWith(data.answer)) {
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+        }
+
+        function toggleAnalysis() {
+            const analysisBox = document.getElementById('analysis-box');
+            // 确保答案先显示
+            const ansBox = document.getElementById('ans-box');
+            if (!ansBox.classList.contains('visible')) {
+                toggleAnswer();
+            }
+            
+            if (analysisBox.classList.contains('hidden')) {
+                analysisBox.classList.remove('hidden');
+            } else {
+                analysisBox.classList.add('hidden');
+            }
+        }
+
+        // 键盘监听
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+            if (e.key === 'Enter') toggleAnswer();
+            if (e.key === ' ') toggleAnswer(); // 空格键
+        });
+
+        // 初始化
+        renderSlide();
+
+    </script>
+</body>
+</html>
